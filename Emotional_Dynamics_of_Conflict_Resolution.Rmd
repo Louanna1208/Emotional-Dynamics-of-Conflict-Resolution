@@ -1,0 +1,484 @@
+
+---
+title: "Why Do We Need an Initiator and Responder?<br> Emotional Dynamics of Conflict Resolution"
+output: 
+  bookdown::html_document2: default
+---
+<style>
+body {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figcaption {
+  display: block;
+  text-align: center;
+}
+
+.caption {
+  display: inline-block;
+  text-align: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #dddddd; 
+  text-align: center; 
+  padding: 8px; 
+}
+
+thead th {
+  background-color: #f2f2f2; 
+}
+</style>
+
+# Introduction
+Conflict resolution is a pivotal aspect of social interactions, with apologies playing a critical role in the reconciliation process. The willingness to apologize first and the expectation of an apology in
+return can significantly affect individuals’ emotional states. This study delves into these emotional responses, focusing on how initiator types — ‘always’, ‘conditional’, and ‘never’ — correlate with the anticipation of positive or negative feelings in conflict scenarios.
+
+# Methodology
+We recruited 47 participants (*M<sub>age</sub>=33.55±19.74, N<sub>female</sub>=27*), who were asked to recall and describe an unresolved conflict and to imagine themselves in six hypothetical apology scenarios: (1)“You apologized first. They did not apologize afterwards” (Corresponding to the emotional variables below: You Apology Alone), (2) “You apologized first then they apologized”(You Received Return Apology), (3)“They apologized first. You did not apologize afterwards”(Other Apology Alone),(4)“They apologized first then you apologized”(Other Received Return Apology),(5)“Neither you nor they apologized ”(Neither Apology) and (6)“You apologized first. They did not apologize afterwards but let you know they forgive you”(Forgiveness Without Apology). They then reported their expected emotional response on a scale from -30 (extremely negative) to 30 (extremely positive). The scenarios varied based on who initiated the apology and whether a return apology was received. We do it again and ask participants to indicate their preferences. Participants were also categorized into three initiator types based on their willingness to apologize first.
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE, fig.show='hold', include=TRUE}
+# (1)Load necessary libraries
+library(dplyr)       
+library(readxl)
+library(readr)
+library(broom)       
+library(ggplot2)      
+library(tidyr)
+library(car)
+library(multcomp)
+library(stats)
+library(stringr)
+library(syuzhet)
+library(knitr)
+library(kableExtra)
+library(forcats)
+library(patchwork)
+library(cowplot)
+library(purrr)
+
+# (2)Load data
+file_path <- 'C:/Users/Louanna/Documents/GitHub/LanPan_program_example/Data - Fall 2023.xlsx'
+data <- read_excel(file_path, sheet = "Data")
+# Initial data cleanup
+cleaned_data <- filter(data, passedattn != 'no')
+# Summary statistics
+summary_statistics <- summary(cleaned_data)
+print(summary_statistics)
+# Reshaping the data
+melted_data <- gather(cleaned_data, feelings_scenario, emotional_response, feelings_youalone, feelings_youaloneforgiven, feelings_bothyoufirst, feelings_themalone, feelings_boththemfirst, feelings_neither, factor_key=TRUE)
+# Create a mapping for scenarios
+scenario_mapping <- c(
+  feelings_youalone = "You Apology Alone",
+  feelings_bothyoufirst = "You Received Return Apology",
+  feelings_youaloneforgiven = "Forgiveness Without Apology",
+  feelings_themalone = "Other Apology Alone",
+  feelings_boththemfirst = "Other Received Return Apology",
+  feelings_neither = "Neither Apology"
+)
+# Apply the mapping to the melted data
+melted_data$feelings_scenario <- factor(melted_data$feelings_scenario, levels = names(scenario_mapping), labels = scenario_mapping)
+```
+
+# Results
+## Task 1 — Emotional Anticipation Analysis
+### Importance of Receiving a Return Apology for the First Apologizer
+In the realm of interpersonal dynamics, the act of offering an apology often sets the stage for reconciliation and understanding. So, the author is very interested in the psychological and emotional significance that first apologizers place on receiving a reciprocal apology. We ask participants to recall an unsolved conflict and assume participants apologize first, their feelings about two scenarios:(1) others did not apologize, (2)others apologized. We found that receiving an apology will
+lead to more positive emotional perceptions, while not receiving an apology will lead to more negative emotional perceptions (*t<sub>46</sub>=-12.88, p<.001*). Because individuals strive for fairness in relationships, and even more consistency among their beliefs, values, and emotions. This indicates that if both parties apologize, then both parties are wrong in the conflict. If one party apologizes but the other party not apologizing, then only the apologizing party will be deemed to be wrong. When both parties apologize, it might be seen as a more equitable exchange (both parties sharing the “cost” of apologizing), and it restores a sense of balance and fairness, leading to positive emotions. If they did not receive a return apology, it could be perceived as an imbalance or unfairness, leading to negative feelings.
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE,fig.show='hold',fig.cap="Contrast in Emotional Response to Apology Scenarios. When one apologizes first without receiving an apology(‘You Apology Alone’) versus when both parties apologize (‘You Received Return Apology’). The emotional responses range from extremely negative to extremely positive, highlighting the emotional impact of reciprocation in apologies."}
+# (3)Task 1 q1:Paired t-test
+sex_count <- table(cleaned_data$sex)
+q1_t_test <- t.test(cleaned_data$feelings_youalone, cleaned_data$feelings_bothyoufirst, paired = TRUE)
+cat("q1-t-statistic:", q1_t_test$statistic, "\n")
+cat("q1-p-value:", q1_t_test$p.value, "\n")
+#Boxplot
+filtered_data <- melted_data %>%
+  filter(feelings_scenario %in% c("You Apology Alone", "You Received Return Apology"))
+ggplot(filtered_data, aes(x = feelings_scenario, y = emotional_response, fill = feelings_scenario)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("You Apology Alone" = "#ADD8E6", "You Received Return Apology" = "#90EE90")) +
+  labs(title = 'Comparative Analysis of Emotional Responses', 
+       x = 'Feeling scenario', 
+       y = 'Emotional Response (-30 to 30)') +
+  scale_y_continuous(breaks = seq(-30, 30, by = 10)) + 
+  theme_minimal() +  # White background with minimal elements
+    theme(legend.position = "none",
+          plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_blank(),  # Remove major grid lines
+          panel.grid.minor = element_blank(),
+          panel.border = element_rect(colour = "black", fill=NA, size=1))
+```
+
+### Impact of Individual Differences on Emotional Variability
+We also found there is a wide range of feelings in two scenarios. The spectrum of emotions elicited in scenarios involving apologies—or the absence thereof—highlights the significant influence of individual differences on emotional responses. Therefore, we focus on the individual differences in the “initiator type”. There are three types: ‘always’ initiators would be willing to apologize first, regardless of whether they’d expect a return apology; ‘conditional’ initiators would be willing to apologize first only if they’d expect a return apology; ‘never’ initiators would not be willing to apologize first, regardless of whether they’d expect a return apology.<br>
+The analysis of variance (ANOVA) revealed two significant main effects. For the scenario, the type of scenario (You Apology Alone vs. You Received Return Apology) has a statistically significant effect on the emotional response for any type of initiator(*F<sub>(1,88)</sub>=102.71, p<.001*). This means that participants who apologized first and then received an apology had more significantly positive effects on their emotional response (M<sub>Received Return Apology</sub>=7.55±14.28) than no apology(M<sub>You Apology Alone</sub>=-18.57±11.89). There is also a significant main effect for initiator type, suggesting that participants’ emotional responses varied significantly according to their tendency to initiate apologies (always, conditional, never)(*F<sub>(2,88)</sub>=6.46, p=.002*), and ‘always’ initiators’ emotions response in all scenario (*M<sub>always</sub>=-0.36±17.47*)are more positive than ‘conditional’ (*M<sub>conditional</sub>=-9.81±19.79*)and ‘never’(*M</sub>never</sub>=-9.45±16.61*). No interaction effect is observed (*F<sub>(2,88)</sub>=0.36, p=.7*). This means that the combined effect of scenario and initiator type on emotional response is not statistically significant. In other words, the difference in emotional responses between scenarios does not depend on the initiator type.<br>
+Subsequently, Tukey’s HSD post hoc analysis was conducted to compare emotional responses between the two scenarios: ‘You Apology Alone’ and ‘Received Return Apology’. The results indicated a statistically significant difference in emotional response when comparing the ‘You Apology Alone’ scenario to the ‘Received Return Apology’ scenario, with a mean difference of 26.13(*p < 0.001*). Specifically, the emotional response to ‘Received Return Apology’ was significantly higher (*mean difference = 26.13, 95% CI [20.75, 31.51]*) than to ’You Apology Alone’. This significant mean difference suggests that receiving an apology can have a substantial positive effect on emotional response, reinforcing the main effect observed in the ANOVA. Additionally, post hoc analysis using Tukey’s HSD test was conducted to further explore the differences between the initiator types. The test did not reveal any statistically significant differences between the groups: the emotional response for ‘always’ initiators did not significantly differ from ‘conditional’ initiators (*mean difference = -9.46, p = .73*) or ‘never’ initiators (*mean difference = -9.09, p = .16*), nor was there a significant difference between ‘conditional’ and ‘never’ initiators (*mean difference = .36, p = 1.00*). These results suggest that, although there is a main effect of initiator type on emotional response, the specific differences between each type of initiator are not statistically significant when considered pairwise.<br>
+Apart from individual differences, one potential source of large variances in emotional feelings can be the context of the conflict. Due to the limitation of imagination-based experiments, when people imagine/recall conflicts, the context of conflicts may vary a lot. The variance in context, especially the intensity and the type of conflict, will have a fundamental effect on the emotional feelings. As well as whether the unresolved conflict occurred in the past or was imagined by the participants, may make this difference larger. And I will explain further in the discussion section.
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE,fig.cap="Emotional Responses Across Scenarios and Initiator Types."}
+# (4)Task 1 q2:Paired t-test
+# Calculating grouped descriptive statistics
+grouped_des <- filtered_data %>%
+  group_by(initiator_type) %>%
+  summarise(mean = mean(emotional_response), std = sd(emotional_response))
+# Define the model for ANOVA analysis
+model <- aov(emotional_response ~ feelings_scenario * initiator_type, data=filtered_data)
+# Perform ANOVA analysis
+anova_results <- Anova(model, type="II")
+print(anova_results)
+# Tukey HSD Post Hoc Test for initiator_type
+tukey_1 <- TukeyHSD(aov(emotional_response ~ initiator_type, data=filtered_data))
+print(tukey_1)
+# Tukey HSD Post Hoc Test for scenario
+tukey_2 <- TukeyHSD(aov(emotional_response ~ feelings_scenario, data=filtered_data))
+print(tukey_2)
+# Create a boxplot 
+ggplot(filtered_data, aes(x=initiator_type, y=emotional_response, fill=feelings_scenario)) +
+  geom_boxplot() +
+  scale_fill_manual(values=c("You Apology Alone" = "#ADD8E6", "You Received Return Apology" = "#90EE90")) +
+  theme_minimal() +
+  labs(title='Emotional Responses Across Scenarios and Initiator Types',
+       x='Initiator Type',
+       y='Emotional Response') +
+  scale_y_continuous(breaks = seq(-30, 30, by = 10)) + 
+  theme(
+    legend.position = c(0.98, 0.98),  # Position the legend inside the plot at the top right
+    legend.justification = c("right", "top"),  # Anchor the legend at its top right corner
+    legend.box.just = c("right", "top"),  # Justify the legend box
+    legend.background = element_rect(fill = NA, linetype = "solid", colour = "lightblue"),
+    legend.margin = margin(3, 3, 3, 3),  # Adjust the margin around the legend
+    plot.title = element_text(hjust = 0.5, size = 10),
+    panel.grid.major = element_blank(),  
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=1)
+  ) +
+  scale_x_discrete(limits = c("always", "conditional", "never"))
+```
+
+### Return Apology Is More Useful Than Forgiveness Without Apology.
+The dynamics of interpersonal conflicts and resolutions are profoundly influenced by the actions taken by the involved parties, particularly in terms of apologies and forgiveness. We are particularly interested in whether an apology can be viewed as a form of forgiveness. We found that when participants apologized first, receiving a return apology made more significant positive feelings than forgiveness without apology(*t<sub>46</sub>=8.07, p<.001*). <br>
+While an apology can serve as a direct acknowledgment of wrongdoing and a step towards reconciliation, forgiveness without an apology, although beneficial, might not provide the same closure or satisfaction to the aggrieved party. Mutual apologies promote relationship satisfaction.
+When one party apologizes and the other reciprocates, it restores a sense of fairness and equity, which is crucial for emotional satisfaction and relationship stability. Conversely, forgiveness without an apology, while noble, may leave unresolved feelings of inequity, as the emotional investment does not seem to be reciprocated.
+
+```{r echo=FALSE, results='hide',message=FALSE,warning=FALSE,fig.cap="The variance in emotional responses among participants who apologize first across three scenarios: apology alone,received return apology, and forgiveness with no apology. The spread and median values indicate how each initiator type reacts emotionally to different apology outcomes."}
+# (5)Task 1 q3:Paired t-test
+q3_t_test <- t.test(cleaned_data$feelings_youaloneforgiven, cleaned_data$feelings_bothyoufirst, paired = TRUE)
+cat("q3-t-statistic:", q3_t_test$statistic, "\n")
+cat("q3-p-value:", q3_t_test$p.value, "\n")
+# Create separate boxplots for each scenario and compare them across the different initiator types
+filtered_data_2 <- melted_data %>%
+  filter(feelings_scenario %in% c("You Apology Alone", "Forgiveness Without Apology", "You Received Return Apology"))
+ggplot(filtered_data_2, aes(x = initiator_type, y = emotional_response, fill = feelings_scenario)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c(
+    "You Apology Alone" = "#ADD8E6",
+    "Forgiveness Without Apology" = "#FADAA5",
+    "You Received Return Apology" = "#90EE90"
+  )) +
+  theme_minimal() +
+  labs(title = 'Comparative Analysis of Emotional Responses by Initiator Type',
+       y = 'Emotional Response (-30 to 30)',
+       x = 'Initiator Type',
+       fill = 'Feelings Scenario') +
+  scale_y_continuous(breaks = seq(-30, 30, by = 10)) + 
+  theme(legend.position = c(0.98, 0.98),  
+        legend.justification = c("right", "top"),  
+        legend.box.just = c("right", "top"), 
+        legend.background = element_rect(fill = NA, linetype = "solid", colour = "lightblue"),
+        legend.margin = margin(3, 3, 3, 3), 
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)
+  ) +
+  scale_x_discrete(limits = c("always", "conditional", "never"))
+```
+
+## Task 2 — Comparative and Proportional Analysis
+The average feelings across the six scenarios, indicated the highest positivity when both parties apologized, with a steep drop in positive anticipation when apologies were not reciprocated.<br>
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE,fig.cap="The average feelings across the six scenarios."}
+# (6) Task 2a
+scenario_stats <- melted_data %>%
+  group_by(feelings_scenario) %>%
+  summarise(mean = mean(emotional_response, na.rm = TRUE),
+            sem = sd(emotional_response, na.rm = TRUE) / sqrt(n()))
+ggplot(scenario_stats, aes(x = reorder(feelings_scenario, -mean), y = mean, fill = feelings_scenario)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem), width = 0.2, position = position_dodge(0.9)) +
+  scale_fill_manual(values = c(
+  "You Apology Alone" = "#ADD8E6",           
+  "Forgiveness Without Apology" = "#FADAA5", 
+  "You Received Return Apology" = "#90EE90", 
+  "Other Apology Alone" = "#DDA0DD",         
+  "Other Received Return Apology" = "#FFB6C1", 
+  "Neither Apology" = "#FFFFE0"              
+)) +
+  labs(title = 'Average Feelings for Six Scenarios',
+       x = 'Scenarios',
+       y = 'Average Feelings (-30 to 30)') +
+  scale_y_continuous(breaks = seq(-30, 30, by = 10)) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle=30, hjust = 1),
+        legend.position = "none",  
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) 
+```
+The ANOVA conducted across the six emotional response scenarios revealed a significant effect(*F<sub>(5,88)</sub>= 50.93, p<.001*), indicating variability in the emotional responses depending on the scenario. Post-hoc pairwise comparisons using the Bonferroni correction method were performed
+to identify specific differences between scenarios. These findings suggest that the average feelings across the six scenarios indicated the highest positivity when both parties apologized, with a steep drop in positive anticipation when apologies were not reciprocated.<br>
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+# (7)Task 2b
+#（ANOVA）
+anova_result <- aov(emotional_response ~ feelings_scenario, data = melted_data)
+summary(anova_result)
+
+#Pairwise t-tests with Bonferroni Correction
+pairwise_results <- list()
+scenarios_to_compare <- setdiff(unique(melted_data$feelings_scenario), "You Apology Alone")
+
+for (scenario in scenarios_to_compare) {
+  comparison_data <- subset(melted_data, feelings_scenario %in% c("You Apology Alone", scenario))
+  test_result <- t.test(emotional_response ~ feelings_scenario, data = comparison_data)
+  pairwise_results[[scenario]] <- test_result
+}
+
+p_values <- sapply(pairwise_results, function(x) x$p.value)
+p_adjusted <- p.adjust(p_values, method = "bonferroni")
+
+results_df <- data.frame(
+  Scenario_Comparison = names(p_adjusted),
+  T_Value = sapply(pairwise_results, function(x) x$statistic),
+  Degrees_of_Freedom = sapply(pairwise_results, function(x) x$parameter),
+  Original_P_Value = p_values,
+  Adjusted_P_Value = p_adjusted,
+  Significance = p_adjusted < 0.05
+)
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+kable(results_df, caption = "Pairwise T-Test Results with Bonferroni Correction", align = "c",
+      format = "html", row.names = FALSE, digits = 3)%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+We let participants think again about the conflict, and imagine no one has yet apologized. We find that there is a significant difference in their preferences between the two options(*&chi;<sup>2</sup>=15.51, p<.001*) and 80% of participants prefer to choose to apologize first and then received the others' return apology, while 20% chose neither apologize.When we think about the initiator type's preferences, there is also a significant difference in different initiator type (*&chi;<sup>2</sup>=47, p<.001*). The result shows that ‘always’ and ‘conditional’ type participants prefer to choose apologize first, then receive return apologies. In contrast, the ‘never’ type prefers to choose neither party apologizes. <br>
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE,fig.show='hold',fig.align='center',fig.cap="The choices are categorized into those who would apologize first and then receive an apology, and those who would not apologize at all. The proportions suggest significant behavioral trends among the always, conditional, and never initiators in the context of apology reciprocation."}
+# (8)Task 2c
+binary_outcomes_mapping <- c(
+  "^I apologize first, then .+ apologizes\\.$" = "You Received Return Apology", 
+  "^Neither I nor .+ apologizes\\.$" = "Neither Apology"
+)
+cleaned_data <- cleaned_data %>%
+  mutate(outcome_binary1 = str_replace_all(outcome_binary1, binary_outcomes_mapping))
+outcome_counts <- cleaned_data %>%
+  group_by(outcome_binary1) %>%
+  summarise(Count = n()) %>%
+  ungroup()
+
+# Calculate proportions
+total_responses <- sum(outcome_counts$Count)
+outcome_counts <- outcome_counts %>%
+  mutate(Proportion = Count / total_responses)
+
+# Create a bar graph of the proportions
+p1 <- ggplot(outcome_counts, aes(x = outcome_binary1, y = Proportion, fill = outcome_binary1)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(
+    "You Received Return Apology" = "#90EE90",
+    "Neither Apology" = "#FFFFE0" 
+  )) +
+  labs(title = "Proportion of Choices\nfor outcome_binary1",
+       x = "Option",
+       y = "Proportion") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) + 
+  ylim(0,1)+
+  theme_minimal() +
+  theme(axis.text.x = element_text(hjust = 0.5),
+        legend.position = "none", 
+        plot.title = element_text(hjust = 0.5), 
+        panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))+
+  scale_x_discrete(labels = function(x) gsub("Received", "Received\n", x))
+
+# Conduct a Chi-square test of independence
+chisq_test_result <- chisq.test(outcome_counts$Count)
+
+# Output the result of the chi-square test
+chisq_test_result
+
+# The difference with initiator_type
+outcome_by_initiator <- cleaned_data %>%
+  group_by(initiator_type, outcome_binary1) %>%
+  summarise(Count = n()) %>%
+  ungroup()
+
+outcome_by_initiator <- outcome_by_initiator %>%
+  group_by(initiator_type) %>%
+  mutate(Total = sum(Count)) %>%
+  ungroup() %>%
+  mutate(Proportion = Count / Total)
+
+p2 <- ggplot(outcome_by_initiator, aes(x = initiator_type, y = Proportion, fill = outcome_binary1)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  scale_fill_manual(values = c(
+    "You Received Return Apology" = "#90EE90",
+    "Neither Apology" = "#FFFFE0"
+  )) +
+  labs(title = "Proportion of Choices\nby Initiator Type",
+       x = "Initiator Type",
+       y = "Proportion") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(hjust = 0.5),
+        legend.position = "none", 
+        plot.title = element_text(hjust = 0.5),
+        panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+chisq_test_result <- chisq.test(xtabs(~ initiator_type + outcome_binary1, data = cleaned_data))
+
+print(chisq_test_result)
+
+p <- (p1 | p2) + 
+  plot_layout(widths = c(2,3),guides = 'collect') &
+  theme(legend.position = "bottom")
+p
+```
+Finally, we used VADER to analyze the sentiment from participants’ descriptions of conflict and found that mostly are negative(*M<sub>sentiment score</sub>=-0.23±0.41*). When using VADER (Valence Aware Dictionary and Sentiment Reasoner) in sentiment analysis, the value 0.05 is used as a common threshold to determine emotional tendencies and is used to distinguish positive, negative, or
+neutral emotions. In the context of our study, this seems counterintuitive: conflicts are mostly negative. Considering the differences in the training of different Natural Language Processing models, we also used the gpt-3.5-turbo model for analysis.<br>
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE,fig.cap="The frequency distribution of sentiment scores derived from participants’ descriptions of conflicts, showcasing the emotional tone of their narratives. Below -0.05 is negative sentiment, above 0.05 is positive sentiment, and between -0.05 and 0.05 is neutral sentiment."}
+# (9) Task 2d
+# I used VADER and gpt-3.5-turbo to conduct sentiment analysis on describe in python. 
+# I inserted the obtained data here and analyzed it.
+file_path_2 <- 'C:/Users/Louanna/Documents/GitHub/LanPan_program_example/updated_cleaned_data.csv'
+updated_cleaned_data <- read_csv(file_path_2)
+
+ggplot(updated_cleaned_data, aes(x = sentiment_score)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "orange", color = "black") +
+  geom_density(fill = "blue", alpha = 0.2) +
+  geom_vline(aes(xintercept = -0.05, color = "Negative Threshold"), linetype = "dashed") +
+  geom_vline(aes(xintercept = 0.05, color = "Positive Threshold"), linetype = "dashed") +
+  labs(
+    title = 'Distribution of Sentiment Scores(VADER)',
+    x = 'Sentiment Score',
+    y = 'Density',
+    color = "Threshold"
+  ) +
+  scale_color_manual(
+    values = c("Negative Threshold" = "red", "Positive Threshold" = "green"),
+    labels = c("Negative Threshold x = -0.05", "Positive Threshold x = 0.05") # Set custom labels for the legend
+  ) +
+  theme_minimal()+
+  theme(axis.text.x = element_text(hjust = 0.5),
+        legend.position = c(0.02, 0.98), 
+        legend.justification = c("left", "top"),  
+        legend.box.just = c("left", "top"),  
+        legend.background = element_rect(fill = NA, linetype = "solid", colour = "lightblue"),
+        legend.margin = margin(3, 3, 3, 3), 
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) 
+```
+We used gpt-3.5-turbo to analyze the sentiment and get their probability. No participants’ descriptions have been classified as positive. The T-test results reveal no statistically significant differences in the probabilities of ‘Negative’ and ‘Neutral’ sentiment classification between ‘always’ and ‘conditional’ initiator types. However, when comparing ‘always’ and ‘never’ initiator types, the probability of a ‘Negative’ classification is significantly different (*p=.047*). It is the same
+when comparing ‘conditional’ and ‘never’(*p=.023*). This suggests that ‘never’ initiators have a statistically higher likelihood of their descriptions being classified as negative compared to ‘always’
+and ‘conditional’ initiators. This finding may be reflective of Attribution Theory, where ‘never’ initiators may attribute the cause of conflicts to external factors or others’ actions, which correlates
+with a more negative emotional valence in their descriptions. ‘Always’ and ‘conditional’ initiators, who may be more open to apology and reconciliation, might frame their experiences more positively, leading to lower negative emotion scores.<br>
+The results for ‘Neutral’ sentiment do not show significant differences between initiator types, suggesting that the initiator’s willingness to apologize does not significantly affect the likelihood
+of their descriptions being classified as neutral. Furthermore given the multiple comparisons performed, the risk of Type I error increases. Therefore, we apply a Bonferroni correction for multiple
+comparisons to maintain a more stringent alpha level and get all Bonferroni Corrected are false.
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE,fig.cap="Probability Distributions of Sentiment Classifications by Initiator Type. The boxplot demonstrates the likelihood of conflict descriptions being classified as negative, neutral, or positive based on the initiator type. Notably, ‘never’ initiators exhibit higher probabilities(emotion score) for negative and neutral sentiment, suggesting a tendency towards more negative or neutral conflict narratives."}
+ggplot(updated_cleaned_data, aes(x = fct_relevel(initiator_type, "always", "conditional", "never"),
+                                 y = Emotion_Score, fill = Labels)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c(
+    "Negative" = "#90EE90",
+    "Neutral" = "#ADD8E6",
+    "Positive" = "#FFFFE0"
+  )) +
+  labs(
+    title = 'Emotion Score Distribution by Initiator Type(gpt-3.5-turbo)',
+    x = 'Initiator Type',
+    y = 'Emotion Score'
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(hjust = 1),
+        legend.position = c(0.98, 0.02),
+        legend.justification = c("right", "bottom"),
+        legend.box.just = c("right", "bottom"),
+        legend.background = element_rect(fill = NA, linetype = "solid", colour = "lightblue"),
+        legend.margin = margin(3, 3, 3, 3),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+```
+```{r echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+perform_t_test <- function(data, group1, group2, label) {
+  sub_data <- data %>% filter(initiator_type %in% c(group1, group2), Labels == label)
+  t_test_result <- t.test(Emotion_Score ~ initiator_type, data = sub_data, var.equal = FALSE)
+  tidy(t_test_result) %>% 
+    mutate(Group1 = group1, Group2 = group2, Label = label)
+}
+
+# Preallocate the dataframe with the expected columns
+results <- data.frame(
+  Label = character(),
+  Group1 = character(),
+  Group2 = character(),
+  statistic = numeric(),
+  p.value = numeric(),
+  parameter = numeric(),
+  stringsAsFactors = FALSE
+)
+
+# Populate the dataframe
+for(label in unique(updated_cleaned_data$Labels)) {
+  label_data <- updated_cleaned_data %>% filter(Labels == label)
+  initiator_types <- unique(label_data$initiator_type)
+  
+  combos <- combn(initiator_types, 2, simplify = FALSE)
+  for(combo in combos) {
+    test_result <- perform_t_test(label_data, combo[1], combo[2], label)
+    results <- rbind(results, test_result)
+  }
+}
+
+# Apply the Bonferroni correction directly to the dataframe
+Adjusted_P_Value <- p.adjust(results$p.value, method = "bonferroni")
+
+# Select and rename the columns as needed
+results_df_2 <- data.frame(
+  Describe_Emotion = results$Label,
+  Initiator_type1 = results$Group1,
+  Initiator_type2 = results$Group2,
+  T_Value = results$statistic,
+  Degrees_of_Freedom = results$parameter,
+  Original_P_Value = results$p.value,
+  Adjusted_P_Value = Adjusted_P_Value,
+  Significance = Adjusted_P_Value < 0.05
+)
+
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+kable(results_df_2, caption = "Comparison of Emotion Scores Across Initiator Types.BC mean Bonferroni Corrected.", align = "c",
+      format = "html", row.names = FALSE, digits = 3)%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+# Discussion
+The findings underscore the emotional significance of apology reciprocation in conflict scenarios. ‘Always’ initiators exhibited more resilience in the face of unreciprocated apologies, while ‘conditional’ and ‘never’ initiators’ emotions were more negatively affected. The intensity and type of conflict can lead to different cognitive appraisals and, thus different emotional reactions. For instance, more intense conflicts may lead to stronger emotional responses, impacting how individuals perceive apologies. The type of conflict may activate different social identities, affecting how apologies are viewed. For example, in-group conflicts might be resolved more amicably than conflicts with out-group members, affecting the expected emotional outcome. For another example, in conflicts where both parties are at fault and conflicts where one party is at fault, individuals may decide whether to apologize first, whether the other party needs to apologize, or whether it is enough for the other party to express forgiveness.<br>
+Furthermore, many researches have shown that actual memories and imagined events can both evoke emotional responses, but often with different intensities. Actual unresolved conflicts might evoke stronger emotions due to their reality and personal history, whereas imagined conflicts might
+not trigger as intense emotional responses. Natural Language Processing (NLP) and Large Language Models (LLMs) can be instrumental in analyzing the text from the ‘describe’ variable to identify the conflict’s characteristics, such as intensity and type.
+
+
